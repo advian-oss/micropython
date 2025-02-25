@@ -10,6 +10,11 @@ set(SDKCONFIG_DEFAULTS
 )
 
 set(SDKCONFIG_DEFAULTS
+        ${SDKCONFIG_DEFAULTS}
+        boards/sdkconfig.240mhz
+)
+
+set(SDKCONFIG_DEFAULTS
     ${SDKCONFIG_DEFAULTS}
     boards/WROVER_N16R8/sdkconfig.flash_16m
 )
