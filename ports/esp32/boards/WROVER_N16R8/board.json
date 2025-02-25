@@ -8,6 +8,7 @@
         "External Flash",
         "WiFi",
         "SPIRAM",
+        "240MHz"
     ],
     "images": [
         "esp32_devkitc.jpg"
