@@ -6,19 +6,17 @@
     "features": [
         "BLE",
         "External Flash",
-        "WiFi"
+        "WiFi",
+        "SPIRAM",
     ],
     "images": [
         "esp32_devkitc.jpg"
     ],
     "mcu": "esp32",
-    "product": "ESP32 / WROOM",
+    "product": "WROVER",
     "thumbnail": "",
     "url": "https://www.espressif.com/en/products/modules",
     "variants": {
-        "D2WD": "ESP32 D2WD",
-        "SPIRAM": "Support for SPIRAM / WROVER",
-        "UNICORE": "ESP32 Unicore",
         "OTA": "Support for OTA"
     },
     "vendor": "Espressif"
