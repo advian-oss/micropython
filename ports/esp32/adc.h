@@ -47,6 +47,19 @@ typedef struct _machine_adc_obj_t {
     machine_adc_block_obj_t *block;
     adc_channel_t channel_id;
     gpio_num_t gpio_id;
+    // Loboris collect related things
+    mp_obj_t callback;
+    void *buffer;
+    FILE *fhndl;
+    uint8_t val_shift;
+    size_t buf_len;
+    size_t buf_ptr;
+    int64_t interval;
+    int64_t summ;
+    int64_t rms_summ;
+    int min;
+    int max;
+    uint8_t cal_read;
 } machine_adc_obj_t;
 
 extern machine_adc_block_obj_t madcblock_obj[];
