@@ -235,6 +235,13 @@ static mp_int_t mp_machine_adc_read_uv(machine_adc_obj_t *self) {
     return madcblock_read_uv_helper(self->block, self->channel_id, atten);
 }
 
+// FIXME: Implement the actual collect logic, now we just test adding new methods
+static mp_int_t mp_machine_adc_collect(machine_adc_obj_t *self) {
+    adc_atten_t atten = madc_atten_get(self);
+    return madcblock_read_uv_helper(self->block, self->channel_id, atten);
+}
+
+
 static void mp_machine_adc_atten_set(machine_adc_obj_t *self, mp_int_t atten) {
     madc_atten_helper(self, atten);
 }

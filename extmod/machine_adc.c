@@ -30,6 +30,12 @@
 
 #include "extmod/modmachine.h"
 
+#if MICROPY_PY_MACHINE_ADC_COLLECT
+#include "py/obj.h"
+#include "py/objarray.h"
+#include "py/builtin.h"
+#endif
+
 // The port must provide implementations of these low-level ADC functions.
 
 static void mp_machine_adc_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kind_t kind);
@@ -50,6 +56,10 @@ static mp_obj_t mp_machine_adc_block(machine_adc_obj_t *self);
 
 #if MICROPY_PY_MACHINE_ADC_READ_UV
 static mp_int_t mp_machine_adc_read_uv(machine_adc_obj_t *self);
+#endif
+
+#if MICROPY_PY_MACHINE_ADC_COLLECT
+static mp_int_t mp_machine_adc_collect(machine_adc_obj_t *self);
 #endif
 
 #if MICROPY_PY_MACHINE_ADC_ATTEN_WIDTH
@@ -109,6 +119,80 @@ static mp_obj_t machine_adc_read_uv(mp_obj_t self_in) {
 static MP_DEFINE_CONST_FUN_OBJ_1(machine_adc_read_uv_obj, machine_adc_read_uv);
 #endif
 
+#if MICROPY_PY_MACHINE_ADC_COLLECT
+// ADC.collect(freq, num_samples=0, read_uv=false, data=none, callback=none, block=false)
+static mp_obj_t machine_adc_collect(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+    enum {
+        ARG_freq, ARG_data, ARG_len, ARG_callback, ARG_readmv
+    };
+    const mp_arg_t allowed_args[] = {
+            {MP_QSTR_freq,     MP_ARG_REQUIRED | MP_ARG_OBJ, {.u_obj = mp_const_none}},
+            {MP_QSTR_data,     MP_ARG_KW_ONLY | MP_ARG_OBJ,  {.u_obj = mp_const_none}},
+            {MP_QSTR_len,      MP_ARG_KW_ONLY | MP_ARG_INT,  {.u_int = 0}},
+            {MP_QSTR_callback, MP_ARG_KW_ONLY | MP_ARG_OBJ,  {.u_obj = mp_const_none}},
+            {MP_QSTR_readmv,   MP_ARG_KW_ONLY | MP_ARG_BOOL, {.u_bool = false}},
+    };
+    machine_adc_obj_t *self = MP_OBJ_TO_PTR(pos_args[0]);
+    // Get arguments
+    mp_arg_val_t args[MP_ARRAY_SIZE(allowed_args)];
+    mp_arg_parse_all(n_args - 1, pos_args + 1, kw_args, MP_ARRAY_SIZE(allowed_args), allowed_args, args);
+
+
+    double freq = mp_obj_get_float(args[ARG_freq].u_obj);
+    if ((freq < 0.001) || (freq > 18000.0)) {
+        mp_raise_ValueError("frequency out of range (0.001 - 18000 Hz)");
+    }
+
+    self->freq = freq;
+    self->callback = NULL;
+    self->buffer = NULL;
+    self->buf_ptr = 0;
+    self->buf_len = 0; //args[ARG_len].u_int;
+    self->cal_read = true;  // args[ARG_readmv].u_bool;
+
+    if (args[ARG_callback].u_obj != mp_const_none) {
+        // FIXME: Is there a separate check for bound methods these days ?
+        if ((!MP_OBJ_IS_FUN(args[ARG_callback].u_obj)) /*&& (!MP_OBJ_IS_METH(args[ARG_callback].u_obj))*/) {
+            mp_raise_ValueError("callback function expected");
+        }
+        self->callback = args[ARG_callback].u_obj;
+    }
+
+
+
+    if (args[ARG_data].u_obj != mp_const_none) {
+        // Collect to the provided array
+        if (!MP_OBJ_IS_TYPE(args[ARG_data].u_obj, &mp_type_array)) {
+            mp_raise_ValueError("array argument expected");
+        }
+        mp_obj_array_t *arr = (mp_obj_array_t *) MP_OBJ_TO_PTR(args[ARG_data].u_obj);
+        if ((arr->typecode == 'h') || (arr->typecode == 'H')) {
+            self->val_shift = 0;
+        } else if (arr->typecode == 'B') {
+            self->val_shift = self->block->width + 1;
+        } else {
+            mp_raise_ValueError("array argument of type 'h', 'H' or 'B' expected");
+        }
+        if (arr->len < 1) {
+            self->buf_len = 0;
+            mp_raise_ValueError("array argument length must be >= 1");
+        }
+        self->buffer = arr->items;
+        if (self->buf_len < 1) self->buf_len = arr->len;
+        else if (arr->len < self->buf_len) self->buf_len = arr->len;
+    } else if (self->buf_len < 1) {
+        self->buf_len = 0;
+        mp_raise_ValueError("length must be >= 1");
+    }
+
+
+    return MP_OBJ_NEW_SMALL_INT(mp_machine_adc_collect(self));
+}
+static MP_DEFINE_CONST_FUN_OBJ_KW(machine_adc_collect_obj, 1, machine_adc_collect);
+#endif
+
+
+
 #if MICROPY_PY_MACHINE_ADC_ATTEN_WIDTH
 
 // ADC.atten(value) -- this is a legacy method.
@@ -154,6 +238,10 @@ static const mp_rom_map_elem_t machine_adc_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_read_u16), MP_ROM_PTR(&machine_adc_read_u16_obj) },
     #if MICROPY_PY_MACHINE_ADC_READ_UV
     { MP_ROM_QSTR(MP_QSTR_read_uv), MP_ROM_PTR(&machine_adc_read_uv_obj) },
+    #endif
+
+    #if MICROPY_PY_MACHINE_ADC_COLLECT
+    { MP_ROM_QSTR(MP_QSTR_collect), MP_ROM_PTR(&machine_adc_collect_obj) },
     #endif
 
     // Legacy methods.

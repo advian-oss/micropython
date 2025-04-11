@@ -54,12 +54,13 @@ typedef struct _machine_adc_obj_t {
     uint8_t val_shift;
     size_t buf_len;
     size_t buf_ptr;
+    double freq;
     int64_t interval;
     int64_t summ;
     int64_t rms_summ;
     int min;
     int max;
-    uint8_t cal_read;
+    bool cal_read;
 } machine_adc_obj_t;
 
 extern machine_adc_block_obj_t madcblock_obj[];
