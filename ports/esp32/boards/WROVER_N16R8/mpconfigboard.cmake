@@ -19,6 +19,11 @@ set(SDKCONFIG_DEFAULTS
     boards/WROVER_N16R8/sdkconfig.flash_16m
 )
 
+set(SDKCONFIG_DEFAULTS
+        ${SDKCONFIG_DEFAULTS}
+        boards/WROVER_N16R8/sdkconfig.usleep
+)
+
 list(APPEND MICROPY_DEF_BOARD
         MICROPY_HW_BOARD_NAME="WROVER 16MB Flash and SPIRAM"
 )
