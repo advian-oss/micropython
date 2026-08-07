@@ -18,6 +18,7 @@ set(SDKCONFIG_DEFAULTS
     ${SDKCONFIG_DEFAULTS}
     boards/WROVER_N16R8/sdkconfig.flash_16m
     boards/WROVER_N16R8/sdkconfig.ext_ram
+    boards/WROVER_N16R8/sdkconfig.dsp
 )
 
 list(APPEND MICROPY_DEF_BOARD
